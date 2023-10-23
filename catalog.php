@@ -1,6 +1,6 @@
 <?php
 require('./db.php');
-$db = new DB('localhost:3307','root','123','lui1');
+$db = new DB('localhost','root','root','convert');
 $filename = __DIR__ . '/books.csv';
 
 $errors = array();
@@ -12,6 +12,7 @@ try {
     $db->query($sql);
     foreach ($all as $item) {
         $sql = getSqlRequest($item);
+
         $request = $db->insert($sql);
         if ($request) {
             echo 'Успешно перенесена запись с ID: '.$item['id'].' Всего перенесено: '.$i.'/'.count($all)."\n";
@@ -38,8 +39,7 @@ function getSqlRequest($data) {
     }
     list($id,,$isbn,$name,$author,,,,,,,,,,,,$s_disc,$disc,,,$photo,$price,$s_price,$category,,,,,$pages,$year,,$images,,,,,,$tirage,,,,,$title,$keywords,$description) = $arr;
     $category = getCategory($category);
-    // $photo ? "http://vitanova.ua/wp-content/uploads/2023/10/$photo " :
-    $photo =  '';
+    $photo = $photo ? "http://localhost:8888/wp-content/uploads/2023/20/$photo" : '';
     $s_price = $s_price == 0 ? '' : $s_price;
     $title = $title ? $title : $name;
     $template = "INSERT INTO `new`
@@ -50,7 +50,7 @@ function getSqlRequest($data) {
      `Мета: specs_isbn`,`Мета: specs_edition`,`Мета: specs_volumes`, 
      `Мета: specs`,`Мета: details`, `Мета: specs_volumes_0_pages`, `Мета: specs_volumes_0_pictures`, `Мета: seo_keywords`, `Мета: seo_description`, `Мета: seo_title`) VALUES 
     ('$id','simple','','$name','1','0','visible','$s_disc','','','','taxable','','1','','','0','0','','','','','1','','$s_price','$price','$category','','','$photo','','','','','','','','','0',
-     '$author','12620','12620','$year','$isbn','$tirage','1','','$disc','$pages','$images','$keywords','$description', '$title')";
+     '$author','','','$year','$isbn','$tirage','1','','$disc','$pages','$images','$keywords','$description', '$title')";
     return $template;
 }
 
