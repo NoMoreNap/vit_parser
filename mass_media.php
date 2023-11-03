@@ -1,6 +1,6 @@
 <?php
 require('./db.php');
-$db = new DB('localhost','root','root','mass_media');
+$db = new DB('localhost:3307','root','123','catalog');
 $filename = __DIR__ . '/books.csv';
 
 $errors = array();
