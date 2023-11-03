@@ -15,11 +15,11 @@ function getDirContents($dir, $i) {
                     continue;
                 }
 
-                $sql = "select id from new where `Изображения` = 'http://localhost:8888/wp-content/uploads/2023/19/$value'";
+                $sql = "select id from new where `Изображения` = 'http://localhost:8888/wp-content/uploads/2023/20/$value'";
                 $is_exist = mysqli_fetch_all($db->query($sql),1);
                 if (boolval($is_exist)) {
                     $i++;
-                    copy($path,"18/$value");
+                    copy($path,"big/$value");
                     echo 'Файл '.$value.' успешно перенесен, всего перенесено: '."$i"."\n";
                 }
                 //;
@@ -31,4 +31,4 @@ function getDirContents($dir, $i) {
 }
 
 
-getDirContents('img/catalog', 0);
+getDirContents('catalog', 0);

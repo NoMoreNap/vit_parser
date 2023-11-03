@@ -1,8 +1,7 @@
 <?php
 
 function crop_img ($img_name) {
-    $prefix= __DIR__.'/18/';
-
+    $prefix= __DIR__.'/big/';
 
     $filename=$prefix.$img_name;
 
@@ -55,15 +54,15 @@ function crop_img ($img_name) {
         @imagecopyresampled($dest, $source, 0, 0, 0, 0, $new_width, $width, $isize[0], $isize[1]);
 
     }
-    imagejpeg($dest, "19/$img_name",100);
+    imagejpeg($dest, "20/$img_name",100);
 }
 
-$files = scandir(__DIR__.'/18/');
+$files = scandir(__DIR__.'/big/');
 $i = 0;
 $errors = array();
 
 foreach ($files as $key => $value) {
-    if ($value != "." && $value != ".." && $value !== '.DS_Store') {
+    if ($value != "." && $value != ".." && $value !== '.DS_Store' && (preg_match('/png/', $value) || preg_match('/jpg/', $value) || preg_match('/gif/', $value))) {
         try {
             crop_img($value);
             $i++;

@@ -1,6 +1,6 @@
 <?php
 require('./db.php');
-$db = new DB('localhost:3307','root','123','catalog');
+$db = new DB('localhost','root','root','artists');
 $filename = __DIR__ . '/books.csv';
 
 $errors = array();
@@ -36,17 +36,13 @@ function getSqlRequest($data) {
     foreach ($data as $item => $value) {
         $arr[] = $value;
     }
-    list($date,$content,$id,$annonce,,$title,,,$year) = $arr;
-    $date = date('20y-m-d', $date);
+    list($id,$name,$fullname,$descr, $photo,$is_au,$is_art,$alte,$visible) = $arr;
+    $date = date('20y-m-d', time());
     $template = " 
-    INSERT INTO `new`(`id`,`Title`, `Date`, `Post Type`, 
-                      `Рубрики`, `content_visible`, `content_hidden`, `Status`, 
-                      `Author ID`, `Author Username`, `Author Email`, `Parent`, 
-                      `Parent Slug`, `Order`, `Comment Status`, `Ping Status`, `Post Modified Date`) 
-    VALUES             ($id,'$title','$date','post','$year',
-                        '$annonce','$content','publish','1','admin','i-nominator@yandex.ru',
-                        '0','0','0','open','open',
-                        '2023-08-26')";
+    INSERT INTO `new`(`ID`,`Title`, `Content`, `Excerpt`, 
+                      `Date`, `Post Type`, `about_0_paragraph`) 
+    VALUES             ($id,'$name','','','$date',
+                        'artist','$descr')";
     return $template;
 }
 

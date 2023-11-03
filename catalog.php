@@ -1,17 +1,22 @@
 <?php
 require('./db.php');
-$db = new DB('localhost','root','123','convert');
-$filename = __DIR__ . '/books.csv';
+$db = new DB('localhost','root','root','convert');
+const DOMEN = 'http://localhost:8888';
 
 $errors = array();
 try {
     $all = "SELECT * FROM old";
     $all = mysqli_fetch_all($db->query($all),1);
     $i = 1;
+    $k = 0;
     $sql = "delete from new";
     $db->query($sql);
     foreach ($all as $item) {
         $sql = getSqlRequest($item);
+        if(!$sql) {
+            $k++;
+            continue;
+        }
 
         $request = $db->insert($sql);
         if ($request) {
@@ -23,34 +28,38 @@ try {
             $errors[] = $item;
         }
     }
+    echo $k;
 
 } catch(Exception $error) {
     echo $error;
 };
 
-foreach ($errors as $error) {
-    echo $error['id']."\n";
-}
+//foreach ($errors as $error) {
+//    echo $error['id']."\n";
+//}
 
 function getSqlRequest($data) {
     $arr = array();
     foreach ($data as $item => $value) {
         $arr[] = $value;
     }
-    list($id,,$isbn,$name,$author,,,,,,,,,,,,$s_disc,$disc,,,$photo,$price,$s_price,$category,,,,,$pages,$year,,$images,,,,,,$tirage,,,,,$title,$keywords,$description) = $arr;
+    list($id,,$isbn,$name,$author,,,,,,,,,,,,$s_disc,$disc,,,$photo,$price,$s_price,$category,,,$link,,$pages,$year,,$images,,,,,,$tirage,,,,,$title,$keywords,$description) = $arr;
     $category = getCategory($category);
-    $photo = $photo ? "http://localhost:8888/wp-content/uploads/2023/20/$photo" : '';
+//    $photo = $photo ? "wp-content/uploads/2023/20/$photo" : '';
+    if (!$photo) {
+        return false;
+    }
     $s_price = $s_price == 0 ? '' : $s_price;
     $title = $title ? $title : $name;
     $template = "INSERT INTO `new`
-    (`ID`, `Тип`, `Артикул`, `Имя`, `Опубликован`, `Рекомендуемый?`, `Видимость в каталоге`, `Краткое описание`, `Описание`, `Дата начала действия скидки`, `Дата окончания действия скидки`,
-     `Статус налога`, `Налоговый класс`, `В наличии?`, `Запасы`, `Величина малых запасов`, `Возможен ли предзаказ?`, `Продано индивидуально?`, `Вес (кг)`, `Длина (см)`, `Ширина (см)`, `Высота (см)`, `Разрешить отзывы от клиентов?`, `Примечание к покупке`, 
-     `Акционная цена`, `Базовая цена`, `Категории`, `Метки`, `Класс доставки`, `Изображения`, `Лимит загрузок`, `Дней срока загрузки`, `Родительский`, `Сгруппированные товары`, `Апсэлы`, `Кросселы`, `Внешний URL`, `Текст кнопки`, `Позиция`,
-     `Мета: author`, `Мета: image`, `Мета: thumbnail`,`Мета: specs_year`,
+    (`ID`, `Тип`, `Имя`, `Опубликован`, `Рекомендуемый?`, `Видимость в каталоге`, `Краткое описание`, 
+     `Статус налога`, `В наличии?`, `Возможен ли предзаказ?`, `Продано индивидуально?`, `Разрешить отзывы от клиентов?`, 
+     `Акционная цена`, `Базовая цена`, `Категории`, `Изображения`, `Позиция`,
+     `Мета: author`,`Мета: specs_year`,
      `Мета: specs_isbn`,`Мета: specs_edition`,`Мета: specs_volumes`, 
      `Мета: specs`,`Мета: details`, `Мета: specs_volumes_0_pages`, `Мета: specs_volumes_0_pictures`, `Мета: seo_keywords`, `Мета: seo_description`, `Мета: seo_title`) VALUES 
-    ('$id','simple','','$name','1','0','visible','$s_disc','','','','taxable','','1','','','0','0','','','','','1','','$s_price','$price','$category','','','$photo','','','','','','','','','0',
-     '$author','','','$year','$isbn','$tirage','1','','$disc','$pages','$images','$keywords','$description', '$title')";
+    ('$id','simple','$name','1','0','visible','$s_disc','taxable','1','0','0','1','$s_price','$price','$category','$photo','0',
+     '$author','$year','$isbn','$tirage','1','','$disc','$pages','$images','$keywords','$description', '$title')";
     return $template;
 }
 
