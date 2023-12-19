@@ -2,33 +2,28 @@
 require('./db.php');
 
 const MAIN_HOST = 'https://vitanova.ru/';
-$db = new DB('localhost','root','root','convert');
+$db = new DB('127.0.0.1:3306','root','123','vitanova');
+$new_db = new DB('127.0.0.1:3306','root','123','new_vitanova');
+
 
 $errors = array();
 try {
-    $all = "SELECT * FROM old";
+    $all = "SELECT * FROM catalog";
     $all = mysqli_fetch_all($db->query($all),1);
     $i = 1;
     $k = 0;
-    $sql = "delete from new";
-    $db->query($sql);
+    $sql = "delete from catalog";
+    $new_db->query($sql);
     foreach ($all as $item) {
         $sql = getSqlRequest($item);
-        // if ($sql == -1) {
-        //     continue;
-        // }
-        if(!$sql) {
-            $k++;
-            continue;
-        }
-        $request = $db->insert($sql);
-        if ($request) {
+        if ($sql) {
             echo 'Успешно перенесена запись с ID: '.$item['id'].' Всего перенесено: '.$i.'/'.count($all)."\n";
             $i++;
 //          break;
         } else {
-            echo 'Ошибка переноса записи с ID: '.$item['id'].' Всего перенесено: '.$i."\n";
-            $errors[] = $item;
+            continue;
+//            echo 'Ошибка переноса записи с ID: '.$item['id'].' Всего перенесено: '.$i."\n";
+//            $errors[] = $item;
         }
     }
     echo $k;
@@ -54,7 +49,10 @@ function getSqlRequest($data) {
     //     return false;
     // }
 
-    $quth_db = new DB('localhost','root','root','vitanova2');
+//    if ($id !== '1049') {
+//        return false;
+//    }
+    $quth_db = new DB('127.0.0.1:3306','root','123','vitanova');
 
     $about_book = "SELECT * FROM `text_blocks` WHERE catalog_id = $id ORDER by pos ASC";
 
@@ -63,7 +61,7 @@ function getSqlRequest($data) {
     // }
 
 
-    $db = new DB('localhost','root','root','convert');
+    $db = new DB('127.0.0.1:3306','root','123','new_vitanova');
         $all = mysqli_fetch_all($quth_db->query($about_book),1);
         list($tir,$num,$auth,$bible,
         $from_translater_small,$about_artist_small,$from_translater,$about_artist,$show_book_url,
@@ -231,11 +229,11 @@ function getSqlRequest($data) {
                         if (!$tr) {
                             continue;
                         }
-                        $sql = "SHOW COLUMNS FROM `new` where field = $tr";
+                        $sql = "SHOW COLUMNS FROM `catalog` where field = $tr";
                             $result = mysqli_fetch_all($db->query($sql),1);
                             if (count($result) <= 0) {
                                 $tr = str_replace("'","`", $tr);
-                                $new_column = "ALTER TABLE new ADD $tr TEXT NOT NULL ";
+                                $new_column = "ALTER TABLE catalog ADD $tr TEXT NOT NULL ";
                                 $r = $db->query($new_column);
                             }
                     }
@@ -255,7 +253,7 @@ function getSqlRequest($data) {
     // if ($id == 3325) {
     //     var_dump($toms);
     //     return false;
-        
+
 
     // } else {
     //     return -1;
@@ -357,8 +355,7 @@ function getSqlRequest($data) {
  `Мета: specs_volumes_3_pages`,`Мета: specs_volumes_3_pictures`,`Мета: specs_volumes_3_isbn`,`Мета: _specs_volumes_3_pages`,`Мета: _specs_volumes_3_pictures`,`Мета: _specs_volumes_3_isbn`,
  `Мета: specs_volumes_4_pages`,`Мета: specs_volumes_4_pictures`,`Мета: specs_volumes_4_isbn`,`Мета: _specs_volumes_4_pages`,`Мета: _specs_volumes_4_pictures`,`Мета: _specs_volumes_4_isbn`, `Мета: review_book`, `Мета: _review_book`,
 $add_infos
-
-`Мета: add_info`, `Мета: _add_info`
+`Мета: add_info`, `Мета: _add_info`, `Артикул`
 ";
 $values = "
 '$id','simple','$name','1','0','visible','$s_disc','taxable','$is_to_buy','$is_to_backorder','0','1','$s_price','$price','$category','$photo','0',
@@ -384,10 +381,49 @@ $values = "
 '$tom4_pages','$tom4_pics','$tom4_isbn','$tom4_pages_meta','$tom4_pics_meta','$tom4_isbn_meta',
 '$show_book_url', 'field_6502c87bfff18',
 $add_info_values
-'$add_info_len','field_6508aa9ff4783'
+'$add_info_len','field_6508aa9ff4783', $id
 "; 
-    $template = "INSERT INTO `new`($head) VALUES ($values)";
-    return $template;
+    $template = "INSERT INTO `catalog`($head) VALUES ($values)";
+
+
+    $db = new DB('127.0.0.1:3306','root','123','vitanova');
+    $new_db = new DB('127.0.0.1:3306','root','123','new_vitanova');
+
+
+    $request = $new_db->insert($template);
+
+
+
+    $is_variation = mysqli_fetch_all($db->query("SELECT * FROM features where cat_id=$id"),1);
+
+    $head = "`Тип`, `Имя`, `Опубликован`, `Рекомендуемый?`, `Видимость в каталоге`, 
+    `Статус налога`, `В наличии?`, `Возможен ли предзаказ?`, `Продано индивидуально?`, `Разрешить отзывы от клиентов?`, 
+    `Базовая цена`, `Родительский`, `Артикул`, `Налоговый класс`, `Позиция`, `Значения атрибутов 1`, `Глобальный атрибут 1`, `Название атрибута 1`";
+
+    if (count($is_variation)) {
+        $sql = "UPDATE catalog SET `Тип` = 'variable', `Название атрибута 1` = 'Экземпляры',`Значения атрибутов 1` = '1-1', `Видимость атрибута 1` = '1', `Глобальный атрибут 1` = '1' where id = $id";
+        $new_db->query($sql);
+
+        $iterator = count($is_variation);
+        while ($iterator !== 0) {
+            $value = $is_variation[$iterator-1]['min'].'-'.$is_variation[$iterator-1]['max'];
+            $name = $name." - $value";
+            $pos = $iterator;
+            $price = $is_variation[$iterator-1]['price'];
+
+            $values = "'variation', '$name', '1', '0','visible','taxable', '$is_to_buy','$is_to_backorder','0','0','$price','$id','','parent', '$pos','$value','1', 'Экземпляры'";
+            $sql = "INSERT INTO `catalog`($head) VALUES ($values)";
+            $new_db->query($sql);
+
+
+            $iterator --;
+        }
+        //}
+        //var_dump($is_variation);
+
+    }
+
+    return $request;
 }
 
 function getParse($category) {
@@ -439,8 +475,6 @@ function getParse($category) {
             return ['Нумерованные издания > Будуар','katalog/numerovannie_izdaniya/buduar/'];
         case '70':
             return ['Нумерованные издания > Волшебный зал','katalog/numerovannie_izdaniya/volshebniy_zal/'];
-        case '67':
-            return ['Нумерованные издания > Рукописи','katalog/numerovannie_izdaniya/rukopisi/'];
         case '73':
             return ['Нумерованные издания > Малый зал','katalog/numerovannie_izdaniya/maliy_zal/'];
         case '71':
@@ -501,7 +535,7 @@ function getParse($category) {
 }
 
 function validateColumn($col_name) {
-    $sql = "SHOW COLUMNS FROM `new` where field = '$col_name'";
+    $sql = "SHOW COLUMNS FROM `catalog` where field = '$col_name'";
 }
 
 //echo '<pre>';
@@ -509,4 +543,4 @@ function validateColumn($col_name) {
 //echo '</pre>';
 
 
-//ALTER TABLE `new`  ADD `Мета: specs_volumes_2_pages` TEXT NOT NULL  AFTER `Мета: _specs_volumes_1_isbn`,  ADD `Мета: specs_volumes_2_pictures` TEXT NOT NULL  AFTER `Мета: specs_volumes_2_pages`,  ADD `Мета: specs_volumes_2_isbn` TEXT NOT NULL  AFTER `Мета: specs_volumes_2_pictures`,  ADD `Мета: _specs_volumes_2_pages` TEXT NOT NULL  AFTER `Мета: specs_volumes_2_isbn`,  ADD `Мета: _specs_volumes_2_pictures` TEXT NOT NULL  AFTER `Мета: _specs_volumes_2_pages`,  ADD `Мета: _specs_volumes_2_isbn` TEXT NOT NULL  AFTER `Мета: _specs_volumes_2_pictures`;
+//ALTER TABLE `catalog`  ADD `Мета: specs_volumes_2_pages` TEXT NOT NULL  AFTER `Мета: _specs_volumes_1_isbn`,  ADD `Мета: specs_volumes_2_pictures` TEXT NOT NULL  AFTER `Мета: specs_volumes_2_pages`,  ADD `Мета: specs_volumes_2_isbn` TEXT NOT NULL  AFTER `Мета: specs_volumes_2_pictures`,  ADD `Мета: _specs_volumes_2_pages` TEXT NOT NULL  AFTER `Мета: specs_volumes_2_isbn`,  ADD `Мета: _specs_volumes_2_pictures` TEXT NOT NULL  AFTER `Мета: _specs_volumes_2_pages`,  ADD `Мета: _specs_volumes_2_isbn` TEXT NOT NULL  AFTER `Мета: _specs_volumes_2_pictures`;
